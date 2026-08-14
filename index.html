@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Antonio's Bookshelf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+  /* ============================================================
+     DESIGN TOKENS — change these to re-theme the whole page
+     ============================================================ */
+  :root{
+    --navy-deep:  #06070f;
+
+    --wood-light: #6b4a35;
+    --wood-mid:   #4a3225;
+    --wood-dark:  #2b1c14;
+
+    --cream:      #f3ecd9;
+    --cream-dim:  rgba(243,236,217,0.78);
+    --ink:        #12141c;
+
+    --font-display: 'Space Grotesk', 'Barlow Condensed', sans-serif;
+    --font-spine:   'Barlow Condensed', 'Arial Narrow', sans-serif;
+    --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0;
+    min-height:100vh;
+    background: var(--navy-deep);
+    color: var(--cream);
+    font-family: var(--font-mono);
+    overflow-x:hidden;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar{
+    display:none;
+  }
+
+  /* ============================================================
+     BACKGROUND CANVAS — pixelated real-time solar system, reacts to cursor
+     ============================================================ */
+  #solar-bg{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    display:block;
+  }
+
+  /* ============================================================
+     HEADER
+     ============================================================ */
+  .header{
+    position:relative;
+    z-index:2;
+    text-align:left;
+    padding: 32px 20px 36px;
+  }
+  .header .eyebrow{
+    margin:0 0 10px;
+    font-size:12px;
+    letter-spacing:.28em;
+    text-transform:uppercase;
+    color: var(--cream-dim);
+  }
+  .header h1{
+    margin:0;
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size: clamp(36px, 6vw, 64px);
+    line-height:1.05;
+  }
+  /* ============================================================
+     CURRENT READING (floating widget, top right)
+     ============================================================ */
+  .current-reading{
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    animation: float-book 3.6s ease-in-out infinite;
+  }
+  .current-reading-cover{
+    width: 64px;
+    height: 96px;
+    border-radius: 4px;
+    object-fit: cover;
+    box-shadow: 0 10px 24px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.3);
+    transition: transform .25s ease;
+  }
+  .current-reading:hover .current-reading-cover{
+    transform: scale(1.06) rotate(-1.5deg);
+  }
+  .current-reading-label{
+    margin:0;
+    font-size:10px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color: var(--cream-dim);
+    text-align:center;
+    max-width: 90px;
+  }
+  @keyframes float-book{
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  @media (max-width: 640px){
+    .current-reading{ top: 14px; right: 14px; }
+    .current-reading-cover{ width: 48px; height: 72px; }
+    .shelf-row{ align-items:center; }
+  }
+
+  .header p.sub{
+    margin:14px 0 0;
+    font-size:13px;
+    color: var(--cream-dim);
+  }
+
+  /* ============================================================
+     SHELF
+     ============================================================ */
+  .shelf-scene{
+    position:relative;
+    z-index:2;
+    max-width:1200px;
+    margin: 0 auto;
+    padding: 0 24px 90px;
+    transition: transform .7s ease, opacity .7s ease;
+  }
+  .shelf-scene.is-hidden{
+    transform: translateY(120%);
+    opacity:0;
+    pointer-events:none;
+  }
+
+  .showcase-toggle{
+    position:fixed;
+    bottom:24px;
+    right:24px;
+    z-index:10;
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    border:1px solid rgba(243,236,217,0.25);
+    background: rgba(20,28,52,.7);
+    color: var(--cream);
+    font-size:18px;
+    line-height:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition: background .15s ease, transform .4s ease;
+  }
+  .showcase-toggle:hover,
+  .showcase-toggle:focus-visible{
+    background: rgba(20,28,52,.95);
+  }
+  .showcase-toggle svg{
+    width:18px;
+    height:18px;
+    transition: transform .4s ease;
+  }
+  .showcase-toggle.is-flipped svg{
+    transform: rotate(180deg);
+  }
+
+  .linkedin-link{
+    position:fixed;
+    bottom:24px;
+    right:84px;
+    z-index:10;
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    border:1px solid rgba(243,236,217,0.25);
+    background: rgba(20,28,52,.7);
+    color: var(--cream);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition: background .15s ease;
+  }
+  .linkedin-link:hover,
+  .linkedin-link:focus-visible{
+    background: rgba(20,28,52,.95);
+  }
+  .linkedin-link svg{
+    width:20px;
+    height:20px;
+  }
+
+  .music-widget{
+    position:fixed;
+    bottom:24px;
+    left:24px;
+    z-index:10;
+    width:180px;
+  }
+  .music-frame{
+    position:relative;
+    width:180px;
+    height:101px;
+    border-radius:8px;
+    overflow:hidden;
+    background:#000;
+    border:1px solid rgba(243,236,217,0.25);
+    box-shadow: 0 10px 24px rgba(0,0,0,.4);
+  }
+  .music-frame iframe{
+    width:100%;
+    height:100%;
+    display:block;
+    border:none;
+    pointer-events:none; /* controls=0, so no need to intercept clicks on the video itself */
+  }
+  .music-toggle{
+    position:absolute;
+    bottom:6px;
+    right:6px;
+    z-index:1;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    border:none;
+    background: rgba(6,7,15,.65);
+    color: var(--cream);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .music-toggle:hover,
+  .music-toggle:focus-visible{
+    background: rgba(6,7,15,.9);
+  }
+  .music-toggle svg{
+    width:16px;
+    height:16px;
+  }
+  .music-toggle-mute-x{ opacity:0; }
+  .music-toggle.is-muted .music-toggle-wave{ opacity:0; }
+  .music-toggle.is-muted .music-toggle-mute-x{ opacity:1; }
+
+  .fake-cursor{
+    position:fixed;
+    top:0; left:0;
+    width:28px;
+    height:28px;
+    z-index:9999;
+    pointer-events:none;
+    opacity:0;
+    transition: left .7s cubic-bezier(.4,0,.2,1), top .7s cubic-bezier(.4,0,.2,1), opacity .2s ease;
+  }
+  .fake-cursor svg{ width:100%; height:100%; filter: drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
+  .fake-cursor.is-clicking svg{ transform: scale(.85); transform-origin: 20% 15%; }
+
+  .music-caption{
+    margin:8px 2px 0;
+    font-family: var(--font-mono);
+    font-size:10px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color: var(--cream-dim);
+  }
+
+  .shelf-row{
+    display:flex;
+    align-items:flex-end;
+    gap:2px;
+    padding: 0 24px;
+    overflow-x:auto;
+    overflow-y:visible;
+    scroll-behavior:smooth;
+    scrollbar-width:none;      /* Firefox */
+    -ms-overflow-style:none;   /* old Edge/IE */
+  }
+  .shelf-row::-webkit-scrollbar{ display:none; } /* Chrome/Safari/new Edge */
+
+  .shelf-nav{
+    position:relative;
+  }
+
+
+  .shelf-board{
+    height:22px;
+    margin: 0 4px;
+    background: linear-gradient(to bottom, var(--wood-light), var(--wood-mid) 45%, var(--wood-dark));
+    box-shadow: 0 14px 24px rgba(0,0,0,.4);
+  }
+
+  /* A single book spine. Height = size, width = thickness (see JS). */
+  .book{
+    position:relative;
+    flex-shrink:0;
+    overflow:hidden;
+    background: var(--spine-color);
+    box-shadow: 2px 0 4px rgba(0,0,0,.25);
+    cursor:pointer;
+    transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+    outline-offset:3px;
+  }
+  .book:hover,
+  .book:focus-visible{
+    transform: translateY(-10px);
+    box-shadow: 4px 8px 14px rgba(0,0,0,.4);
+    filter: brightness(1.06);
+  }
+
+  .book-spine-img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    display:block;
+    pointer-events:none;
+  }
+
+  .book-title{
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-family: var(--font-spine);
+    font-weight:400;
+    letter-spacing:.09em;
+    font-size: clamp(11px, 1.4vw, 15px);
+    color: var(--cream);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    max-height: calc(100% - 46px);
+  }
+
+  .book-author{
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-family: var(--font-mono);
+    font-weight:400;
+    font-size:10px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color: var(--cream-dim);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    max-height:70px;
+  }
+
+  /* ============================================================
+     MODAL — cover + description popup
+     ============================================================ */
+  .modal-overlay{
+    position:fixed;
+    inset:0;
+    z-index:50;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: rgba(10,14,26,.72);
+    padding:20px;
+    opacity:0;
+    visibility:hidden;
+    transition: opacity .2s ease;
+  }
+  .modal-overlay.open{
+    opacity:1;
+    visibility:visible;
+  }
+
+  .modal-card{
+    position:relative;
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    gap:28px;
+    max-width:640px;
+    width:100%;
+    max-height:85vh;
+    overflow-y:auto;
+    background: rgba(243,236,217,0.55);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: var(--ink);
+    border-radius:14px;
+    padding: 36px;
+    box-shadow: 0 30px 60px rgba(0,0,0,.5);
+    transform: translateY(16px) scale(.98);
+    transition: transform .22s ease;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+  }
+  .modal-card::-webkit-scrollbar{ display:none; }
+  .modal-overlay.open .modal-card{
+    transform: translateY(0) scale(1);
+  }
+
+  .modal-close{
+    display:none;
+  }
+
+  .modal-cover-wrap{
+    flex:0 0 auto;
+    width:min(40vw, 240px);
+    aspect-ratio: 2 / 3;
+    perspective: 900px;
+  }
+  .modal-cover-card{
+    position:relative;
+    width:100%;
+    height:100%;
+    border-radius:6px;
+    overflow:hidden;
+    box-shadow: 0 10px 20px rgba(0,0,0,.25);
+    transform-style: preserve-3d;
+    transform: rotateX(0deg) rotateY(0deg) scale(1);
+    transition: transform .4s ease-out;
+    cursor: grab;
+    touch-action: none;
+  }
+  .modal-cover{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    pointer-events:none;
+  }
+  .modal-cover-fallback{
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:14px;
+    font-family: var(--font-spine);
+    font-weight:700;
+    font-size:15px;
+    color: var(--cream);
+    pointer-events:none;
+  }
+  .modal-cover-sparkle{
+    position:absolute;
+    inset:0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1.5px);
+    background-size: 6px 6px;
+    background-position: 0 0;
+    mix-blend-mode: overlay;
+    opacity: 0;
+    transition: opacity .25s ease-out;
+    pointer-events:none;
+  }
+  .modal-cover-glare{
+    position:absolute;
+    inset:0;
+    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.35), transparent 60%);
+    opacity: 0;
+    transition: opacity .15s ease-out;
+    pointer-events:none;
+    mix-blend-mode: overlay;
+  }
+
+  .modal-info{
+    flex:1 1 auto;
+    text-align:left;
+    min-width:0;
+  }
+  .modal-info h2{
+    margin:0 0 6px;
+    font-family: var(--font-display);
+    font-size:26px;
+    line-height:1.15;
+  }
+  .modal-author{
+    margin:0 0 16px;
+    font-family: var(--font-mono);
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color: rgba(18,20,28,.6);
+  }
+  .modal-desc{
+    margin:0;
+    font-family: Georgia, serif;
+    font-size:15px;
+    line-height:1.6;
+    text-align:left;
+  }
+
+  @media (max-width: 480px){
+    .modal-card{ padding:24px; flex-direction:column; align-items:center; }
+    .modal-info{ text-align:center; }
+    .modal-desc{ text-align:left; }
+    .modal-cover-wrap{ width:min(72vw, 280px); }
+  }
+
+  /* ============================================================
+     PIXEL RABBIT — Clay, a little pixelated netherland dwarf
+     that hops around the page. Click him to say hi.
+     ============================================================ */
+  #pixel-rabbit{
+    display:none; /* Clay hidden for now — flip to block (or remove this line) to bring him back */
+    position:fixed;
+    top:0; left:0;
+    z-index:30;
+    cursor:pointer;
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+    filter: drop-shadow(0 4px 3px rgba(0,0,0,.5));
+    will-change: transform;
+  }
+
+  .rabbit-modal-canvas{
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+    background:transparent;
+  }
+
+</style>
+</head>
+<body>
+
+  <canvas id="solar-bg"></canvas>
+
+  <button class="current-reading" id="current-reading-btn" aria-label="View my current reading">
+    <img class="current-reading-cover" id="current-reading-cover" alt="">
+    <p class="current-reading-label">My current reading</p>
+  </button>
+
+  <header class="header">
+    <p class="eyebrow">Virtual Bookshelf</p>
+    <h1>Antonio's Bookshelf</h1>
+    
+  </header>
+
+  <main class="shelf-scene">
+    <div class="shelf-nav">
+      <div class="shelf-row" id="shelf-row"><!-- book spines are injected here by JS --></div>
+    </div>
+    <div class="shelf-board"></div>
+  </main>
+
+  <button class="showcase-toggle" id="showcase-toggle" aria-label="Hide the bookshelf to see the background" title="Hide the bookshelf">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </button>
+
+  <a class="linkedin-link" href="https://www.linkedin.com/in/antoniokendrick/" target="_blank" rel="noopener noreferrer" aria-label="Open my LinkedIn profile" title="LinkedIn">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.03-1.85-3.03-1.85 0-2.14 1.45-2.14 2.94v5.66H9.36V9h3.41v1.56h.05c.48-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z"/>
+    </svg>
+  </a>
+
+  <div class="music-widget">
+    <div class="music-frame">
+      <div id="yt-player"></div>
+      <button class="music-toggle" id="music-toggle" aria-label="Mute music" title="Mute music">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 9v6h4l5 5V4L8 9H4z"></path>
+          <path class="music-toggle-wave" d="M16.5 8.5a5 5 0 0 1 0 7"></path>
+          <path class="music-toggle-mute-x" d="M16 8l5 8M21 8l-5 8"></path>
+        </svg>
+      </button>
+    </div>
+    <p class="music-caption">Click unmute to play music</p>
+  </div>
+
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+      <div class="modal-cover-wrap">
+        <div class="modal-cover-card" id="modal-cover-card">
+          <img id="modal-cover" class="modal-cover" alt="">
+          <div id="modal-cover-fallback" class="modal-cover-fallback" hidden></div>
+          <div class="modal-cover-sparkle" id="modal-cover-sparkle"></div>
+          <div class="modal-cover-glare" id="modal-cover-glare"></div>
+        </div>
+      </div>
+      <div class="modal-info">
+        <h2 id="modal-title"></h2>
+        <p id="modal-author" class="modal-author"></p>
+        <p id="modal-desc" class="modal-desc"></p>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="pixel-rabbit" aria-label="Clay the rabbit" role="button" tabindex="0"></canvas>
+
+  <div class="modal-overlay" id="rabbit-modal-overlay">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="rabbit-modal-title">
+      <button class="modal-close" id="rabbit-modal-close" aria-label="Close">&times;</button>
+      <canvas id="rabbit-modal-canvas" class="rabbit-modal-canvas"></canvas>
+      <div class="modal-info">
+        <h2 id="rabbit-modal-title">Clay</h2>
+        <p class="modal-author">NETHERLAND DWARF</p>
+      </div>
+    </div>
+  </div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+/* =====================================================================
+   MUSIC WIDGET — small embedded YouTube player (official upload) with
+   a mute/unmute button. Starts muted (browsers block audio autoplay
+   otherwise); the button unmutes on click, which counts as the user
+   gesture browsers require.
+   ===================================================================== */
+let ytPlayer = null;
+let ytMuted = true;
+
+function onYouTubeIframeAPIReady(){
+  ytPlayer = new YT.Player('yt-player', {
+    width: 180,
+    height: 101,
+    videoId: 'yGHEis32s2Y', // Steve Lacy - "Oh Yeah?" (official visualizer)
+    playerVars: {
+      autoplay: 1,
+      mute: 1,
+      controls: 0,
+      modestbranding: 1,
+      rel: 0,
+      playsinline: 1,
+      loop: 1,
+      playlist: 'yGHEis32s2Y' // required by the API for a single video to loop
+    },
+    events: {
+      onReady: (e) => {
+        // Browsers block unmuted autoplay without a prior user gesture,
+        // so start muted (which always autoplays), then immediately
+        // flip to unmuted so it plays with sound right away.
+        e.target.mute();
+        e.target.playVideo();
+        simulateCursorClick(document.getElementById('music-toggle'));
+      }
+    }
+  });
+}
+
+function simulateCursorClick(target){
+  const rect = target.getBoundingClientRect();
+  const cursor = document.createElement('div');
+  cursor.className = 'fake-cursor';
+  cursor.innerHTML = '<svg viewBox="0 0 24 24"><path d="M2 2 L2 19 L6.7 15 L9.5 21.5 L12 20.4 L9.2 14 L15.5 14 Z" fill="#f3ecd9" stroke="#06070f" stroke-width="1.2"/></svg>';
+  document.body.appendChild(cursor);
+
+  // start a little off from the button, then glide in
+  cursor.style.left = (rect.left + rect.width / 2 + 110) + 'px';
+  cursor.style.top = (rect.top + rect.height / 2 + 70) + 'px';
+  requestAnimationFrame(() => {
+    cursor.style.opacity = '1';
+    requestAnimationFrame(() => {
+      cursor.style.left = (rect.left + rect.width / 2 - 14) + 'px';
+      cursor.style.top = (rect.top + rect.height / 2 - 14) + 'px';
+    });
+  });
+
+  setTimeout(() => {
+    cursor.classList.add('is-clicking');
+    target.click();
+    setTimeout(() => cursor.classList.remove('is-clicking'), 120);
+  }, 750);
+
+  setTimeout(() => {
+    cursor.style.opacity = '0';
+    setTimeout(() => cursor.remove(), 300);
+  }, 1100);
+}
+
+function setMusicMuted(muted){
+  if (!ytPlayer) return;
+  ytMuted = muted;
+  if (ytMuted) {
+    ytPlayer.mute();
+  } else {
+    ytPlayer.unMute();
+    ytPlayer.playVideo();
+  }
+  const toggle = document.getElementById('music-toggle');
+  toggle.classList.toggle('is-muted', ytMuted);
+  const label = ytMuted ? 'Unmute music' : 'Mute music';
+  toggle.setAttribute('aria-label', label);
+  toggle.setAttribute('title', label);
+}
+
+document.getElementById('music-toggle').addEventListener('click', () => {
+  setMusicMuted(!ytMuted);
+});
+</script>
+<script>
+/* =====================================================================
+   BOOK DATA
+   -------------------------------------------------------------------
+   To add a book: copy one {...} block below, paste it into the array,
+   and edit the values. That's it — the shelf and popup update on their own.
+
+   Fields:
+     title       - shown vertically on the spine
+     author      - shown vertically on the spine, below the title
+     color       - any hex color, sets the spine background
+     size        - controls HEIGHT of the spine. One of: "small" | "medium" | "large"
+     thickness   - controls WIDTH of the spine.  One of: "thin" | "thick" | "thicker"
+     cover       - path or URL to the FRONT cover image shown in the popup.
+                   If it fails to load (or you leave it as ""), a colored
+                   placeholder with the title is shown instead — nothing breaks.
+     spine       - OPTIONAL path or URL to a real photo of the book's SPINE,
+                   shown on the shelf itself. Leave this out entirely and it
+                   will guess a path from `cover` (swapping "covers/" for
+                   "spines/"). Until that file exists, the shelf shows a
+                   colored placeholder with the title/author instead —
+                   drop your real spine photos into a "spines/" folder
+                   whenever you have them, no code changes needed.
+     description - the text shown in the popup under the title/author.
+   ===================================================================== */
+  const books = [
+    {
+    title: "The Hobbit",
+    author: "J.R.R. Tolkien",
+    color: "#000000",
+    size: "medium",
+    thickness: "thick",
+    cover: "covers/the-hobbit.jpg",
+    spine: "spines/the-hobbit.png",
+    description: "Bilbo Baggins, a comfort-loving hobbit, is swept into a quest with a company of dwarves to reclaim treasure guarded by the dragon Smaug, encountering trolls, elves, goblins, and a mysterious ring along the way."
+  },
+  {
+    title: "Crime and Punishment",
+    author: "Fyodor Dostoevsky",
+    color: "#000000",
+    size: "large",
+    thickness: "thicker",
+    cover: "covers/crime-and-punishment.jpg",
+    spine: "spines/crime-and-punishment.png",
+    description: "A destitute former student in St. Petersburg murders a pawnbroker believing himself exempt from ordinary morality, then spirals through guilt, paranoia, and the possibility of redemption as investigators close in."
+  },
+  {
+    title: "White Nights",
+    author: "Fyodor Dostoevsky",
+    color: "#000000",
+    size: "small",
+    thickness: "thin",
+    cover: "covers/white-nights.jpg",
+    spine: "spines/white-nights.png",
+    description: "A lonely dreamer in St. Petersburg falls for a young woman named Nastenka over four fleeting nights, as she waits for a former lover to return, in a short, wistful tale of longing and heartbreak."
+  },
+  {
+    title: "Hamlet",
+    author: "William Shakespeare",
+    color: "#000000",
+    size: "small",
+    thickness: "thin",
+    cover: "covers/hamlet.jpg",
+    spine: "spines/hamlet.png",
+    description: "Prince Hamlet of Denmark grapples with grief, madness, and revenge after his father's ghost reveals he was murdered by Hamlet's uncle, who has since taken the throne and married Hamlet's mother."
+  },
+  {
+    title: "Normal People",
+    author: "Sally Rooney",
+    color: "#000000",
+    size: "medium",
+    thickness: "thin",
+    cover: "covers/normal-people.jpg",
+    spine: "spines/normal-people.png",
+    description: "Connell and Marianne, two Irish teenagers from different social classes, move in and out of each other's lives through secondary school and university, tracing an on-again, off-again bond shaped by class, intimacy, and miscommunication."
+  },
+  {
+    title: "Food for the Heart",
+    author: "Ajahn Chah",
+    color: "#000000",
+    size: "medium",
+    thickness: "thick",
+    cover: "covers/food-for-the-heart.jpg",
+    spine: "spines/food-for-the-heart.png",
+    description: "A collection of teachings from the revered Thai forest monk Ajahn Chah on Buddhist meditation, mindfulness, and letting go, drawn from talks given to monks and lay students over decades."
+  },
+  {
+    title: "Thousand Cranes",
+    author: "Yasunari Kawabata",
+    color: "#000000",
+    size: "small",
+    thickness: "thin",
+    cover: "covers/thousand-cranes.jpg",
+    spine: "spines/thousand-cranes.png",
+    description: "A quiet, melancholic Japanese novel about a young man drawn into a tangled web of relationships connected to his late father's mistresses, set against the ritual backdrop of the tea ceremony."
+  },
+  {
+    title: "Mastering Civility",
+    author: "Christine Porath",
+    color: "#000000",
+    size: "large",
+    thickness: "thick",
+    cover: "covers/mastering-civility.jpg",
+    spine: "spines/mastering-civility.png",
+    description: "A workplace-culture manifesto showing how rudeness and incivility quietly erode performance, health, and profits, and offering research-backed strategies for building respectful, high-performing teams."
+  },
+  {
+    title: "Intention",
+    author: "Andrew Wallas",
+    color: "#000000",
+    size: "medium",
+    thickness: "thin",
+    cover: "covers/intention.jpg",
+    spine: "spines/intention.png",
+    description: "A self-help guide on how to tap into the power of intention, walking readers through self-inquiry to clear limiting beliefs and align their inner world with the life they want to create."
+  },
+  {
+    title: "Tales from the Arabian Nights",
+    author: "Edited by Andrew Lang",
+    color: "#000000",
+    size: "small",
+    thickness: "thin",
+    cover: "covers/tales-from-the-arabian-nights.jpg",
+    spine: "spines/tales-from-the-arabian-nights.png",
+    description: "A classic collection of Middle Eastern and South Asian folk tales framed by Scheherazade's nightly storytelling to delay her execution, featuring Aladdin, Ali Baba, Sinbad, and other legendary figures."
+  },
+  {
+    title: "A Universe from Nothing",
+    author: "Lawrence M. Krauss",
+    color: "#000000",
+    size: "large",
+    thickness: "thin",
+    cover: "covers/a-universe-from-nothing.jpg",
+    spine: "spines/a-universe-from-nothing.png",
+    description: "Physicist Lawrence Krauss explains modern cosmology's case for how a universe full of matter, space, and time could arise from nothing, challenging traditional philosophical and religious explanations of existence."
+  },
+  {
+    title: "The Adventures of Sherlock Holmes",
+    author: "Arthur Conan Doyle",
+    color: "#000000",
+    size: "medium",
+    thickness: "thin",
+    cover: "covers/the-adventures-of-sherlock-holmes.jpg",
+    spine: "spines/the-adventures-of-sherlock-holmes.png",
+    description: "A collection of twelve short stories featuring detective Sherlock Holmes and his companion Dr. Watson as they solve mysteries ranging from blackmail to theft using sharp observation and deduction."
+  },
+  {
+    title: "Notes from Small Planets",
+    author: "Nate Crowley",
+    color: "#000000",
+    size: "medium",
+    thickness: "thick",
+    cover: "covers/notes-from-small-planets.jpg",
+    spine: "spines/notes-from-small-planets.png",
+    description: "A satirical, illustrated travel guide to the fictional worlds of major fantasy and sci-fi franchises, poking fun at genre tropes as if reviewing them as real tourist destinations."
+  },
+  {
+    title: "The Clue in the Old Album",
+    author: "Carolyn Keene",
+    color: "#000000",
+    size: "small",
+    thickness: "thin",
+    cover: "covers/the-clue-in-the-old-album.jpg",
+    spine: "spines/the-clue-in-the-old-album.png",
+    description: "Nancy Drew, book 24 in the series, follows the young detective as she investigates a mystery tied to an old photo album, tracking down clues linked to a stolen violin and a group of gypsies."
+  },
+  {
+    title: "Consumed",
+    author: "David Cronenberg",
+    color: "#000000",
+    size: "large",
+    thickness: "thicker",
+    cover: "covers/consumed.jpg",
+    spine: "spines/consumed.png",
+    description: "A dark, body-horror-tinged novel by filmmaker David Cronenberg about two journalists investigating a murder linked to philosophy, cannibalism, disease, and technology, unraveling into a web of obsession and conspiracy."
+  },
+  {
+    title: "Can't Hurt Me",
+    author: "David Goggins",
+    color: "#000000",
+    size: "large",
+    thickness: "thick",
+    cover: "covers/cant-hurt-me.jpg",
+    spine: "spines/cant-hurt-me.png",
+    description: "Retired Navy SEAL David Goggins recounts his transformation from an overweight, abused childhood to elite endurance athlete and warrior, sharing his philosophy of mental toughness and pushing past self-imposed limits."
+  },
+  {
+    title: "The Diary of a CEO",
+    author: "Steven Bartlett",
+    color: "#000000",
+    size: "medium",
+    thickness: "thin",
+    cover: "covers/the-diary-of-a-ceo.jpg",
+    spine: "spines/the-diary-of-a-ceo.png",
+    description: "Entrepreneur and podcaster Steven Bartlett distills 33 laws on success, self-belief, and leadership drawn from his own business failures and lessons learned interviewing top founders and thinkers."
+  },
+  {
+    title: "Elon Musk",
+    author: "Ashlee Vance",
+    color: "#000000",
+    size: "small",
+    thickness: "thicker",
+    cover: "covers/elon-musk.jpg",
+    spine: "spines/elon-musk.png",
+    description: "A biography tracing Elon Musk's path from a difficult childhood in South Africa through PayPal, Tesla, and SpaceX, portraying his relentless drive, high-risk bets, and demanding leadership style."
+  },
+  {
+    title: "Intention",
+    author: "Andrew Wallas",
+    color: "#000000",
+    size: "medium",
+    thickness: "thin",
+    cover: "covers/intention.jpg",
+    spine: "spines/intention.png",
+    description: "A self-help guide on how to tap into the power of intention, walking readers through self-inquiry to clear limiting beliefs and align their inner world with the life they want to create."
+  },
+  {
+    title: "The Emotionally Intelligent Leader",
+    author: "Daniel Goleman",
+    color: "#000000",
+    size: "medium",
+    thickness: "thin",
+    cover: "covers/the-emotionally-intelligent-leader.jpg",
+    spine: "spines/the-emotionally-intelligent-leader.png",
+    description: "A Harvard Business Review Press collection of three Goleman essays on emotional intelligence, covering what makes an effective leader, the neuroscience of focus, and six leadership styles tied to measurable results."
+  },
+  {
+    title: "Leaders Eat Last",
+    author: "Simon Sinek",
+    color: "#000000",
+    size: "large",
+    thickness: "thick",
+    cover: "covers/leaders-eat-last.jpg",
+    spine: "spines/leaders-eat-last.png",
+    description: "Simon Sinek argues that great leaders build a 'circle of safety' that puts their team's wellbeing first, drawing on biology and military case studies to explain what makes some organizations trust and thrive together."
+  },
+  {
+    title: "The Entrepreneur's Book",
+    author: "Neil Francis",
+    color: "#000000",
+    size: "small",
+    thickness: "thin",
+    cover: "covers/the-entrepreneurs-book.jpg",
+    spine: "spines/the-entrepreneurs-book.png",
+    description: "A concise guide exploring the crucial 'why' questions behind entrepreneurial success, using the author's own experience as a CEO, stroke survivor, and founder to unpack purpose, drive, and resilience."
+  },
+  {
+    title: "The 5 AM Club",
+    author: "Robin Sharma",
+    color: "#000000",
+    size: "medium",
+    thickness: "thin",
+    cover: "covers/the-5-am-club.jpg",
+    spine: "spines/the-5-am-club.png",
+    description: "A business-fable-style self-help book following an entrepreneur and an artist mentored by an eccentric billionaire, who teaches them a morning routine built around waking at 5 a.m. to unlock peak productivity and personal growth."
+  },
+
+  {
+    title: "Rich Dad Poor Dad",
+    author: "Robert T. Kiyosaki",
+    color: "#000000",
+    size: "small",
+    thickness: "thin",
+    cover: "covers/rich-dad-poor-dad.jpg",
+    spine: "spines/rich-dad-poor-dad.png",
+    description: "Robert Kiyosaki contrasts the financial philosophies of his own father and his best friend's father to argue that financial literacy, asset-building, and entrepreneurial thinking matter more than a traditional job for building wealth."
+  },
+  {
+    title: "The Psychology of Emotion",
+    author: "David J. Lieberman",
+    color: "#000000",
+    size: "small",
+    thickness: "thin",
+    cover: "covers/the-psychology-of-emotion.jpg",
+    spine: "spines/the-psychology-of-emotion.png",
+    description: "Psychotherapist David J. Lieberman offers a framework for permanently shifting perspective so that small frustrations lose their grip and bigger problems are met with clarity and authentic acceptance instead of anger."
+  }
+  
+    // -- COPY A BLOCK ABOVE, PASTE HERE, EDIT VALUES, TO ADD MORE BOOKS --
+  ];
+
+  /* =====================================================================
+     SIZE / THICKNESS SCALE
+     Change the numbers here to make ALL small/medium/large or
+     thin/thick/thicker books bigger or smaller across the whole shelf.
+     ===================================================================== */
+  const HEIGHT_BY_SIZE = { small: 310, medium: 380, large: 450 };       // px, tall
+  const WIDTH_BY_THICKNESS = { thin: 34, thick: 50, thicker: 68 };      // px, wide
+
+  /* =====================================================================
+     RENDER THE SHELF
+     ===================================================================== */
+  function escapeHtml(str){
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function guessSpinePath(book){
+    if (book.spine) return book.spine;
+    if (book.cover) return book.cover.replace('covers/', 'spines/');
+    return '';
+  }
+
+  function renderShelf(){
+    const row = document.getElementById('shelf-row');
+    row.innerHTML = '';
+
+    books.forEach((book) => {
+      const spine = document.createElement('div');
+      spine.className = 'book';
+      spine.style.setProperty('--spine-color', book.color || '#333');
+      spine.style.height = (HEIGHT_BY_SIZE[book.size] || HEIGHT_BY_SIZE.medium) + 'px';
+      spine.style.width  = (WIDTH_BY_THICKNESS[book.thickness] || WIDTH_BY_THICKNESS.thin) + 'px';
+      spine.tabIndex = 0;
+      spine.setAttribute('role', 'button');
+      spine.setAttribute('aria-label', book.title + ' by ' + book.author);
+
+      const img = document.createElement('img');
+      img.className = 'book-spine-img';
+      img.alt = book.title + ' by ' + book.author;
+      img.src = guessSpinePath(book);
+      img.addEventListener('load', () => {
+        const ratio = img.naturalWidth / img.naturalHeight;
+        if (ratio > 0) spine.style.width = (spine.offsetHeight * ratio) + 'px';
+      });
+      spine.appendChild(img);
+
+      spine.addEventListener('click', () => openModal(book));
+      spine.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openModal(book);
+        }
+      });
+
+      row.appendChild(spine);
+    });
+  }
+
+  /* =====================================================================
+     MODAL (cover + description popup)
+     ===================================================================== */
+  const overlay        = document.getElementById('modal-overlay');
+  const modalCoverCard  = document.getElementById('modal-cover-card');
+  const modalCover      = document.getElementById('modal-cover');
+  const modalFallback   = document.getElementById('modal-cover-fallback');
+  const modalSparkle    = document.getElementById('modal-cover-sparkle');
+  const modalGlare      = document.getElementById('modal-cover-glare');
+  const modalTitle      = document.getElementById('modal-title');
+  const modalAuthor     = document.getElementById('modal-author');
+  const modalDesc       = document.getElementById('modal-desc');
+  const modalCloseBtn   = document.getElementById('modal-close');
+
+  /* =====================================================================
+     COVER TILT — same trick as a holographic trading card: the cover
+     rotates toward the cursor, with a moving rainbow foil (holo), a
+     fine sparkle layer, and a soft glare, all following pointer position.
+     ===================================================================== */
+  const COVER_MAX_TILT = 14; // degrees
+  let coverTiltRAF = null;
+  let pendingTiltEvent = null;
+
+  function applyCoverTilt(){
+    coverTiltRAF = null;
+    const { clientX, clientY } = pendingTiltEvent;
+    const rect = modalCoverCard.getBoundingClientRect();
+    const px = (clientX - rect.left) / rect.width - 0.5;
+    const py = (clientY - rect.top) / rect.height - 0.5;
+
+    const rotateY = px * COVER_MAX_TILT * 2;
+    const rotateX = -py * COVER_MAX_TILT * 2;
+
+    modalCoverCard.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.04)`;
+
+    modalGlare.style.opacity = 0.6;
+    modalGlare.style.background =
+      `radial-gradient(circle at ${(px + 0.5) * 100}% ${(py + 0.5) * 100}%, rgba(255,255,255,0.35), transparent 60%)`;
+
+    modalSparkle.style.opacity = 0.35;
+    modalSparkle.style.backgroundPosition = `${-px * 20}px ${-py * 20}px`;
+  }
+
+  function updateCoverTilt(clientX, clientY){
+    modalCoverCard.style.transition = 'transform 0.05s linear';
+    pendingTiltEvent = { clientX, clientY };
+    if (coverTiltRAF === null) {
+      coverTiltRAF = requestAnimationFrame(applyCoverTilt);
+    }
+  }
+
+  function resetCoverTilt(){
+    if (coverTiltRAF !== null) {
+      cancelAnimationFrame(coverTiltRAF);
+      coverTiltRAF = null;
+    }
+    modalCoverCard.style.transition = 'transform 0.4s ease-out';
+    modalCoverCard.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)';
+    modalGlare.style.opacity = 0;
+    modalSparkle.style.opacity = 0;
+  }
+
+  modalCoverCard.addEventListener('pointermove', (e) => updateCoverTilt(e.clientX, e.clientY));
+  modalCoverCard.addEventListener('pointerleave', resetCoverTilt);
+  modalCoverCard.addEventListener('pointerup', resetCoverTilt);
+  modalCoverCard.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+
+  function openModal(book){
+    modalTitle.textContent  = book.title;
+    modalAuthor.textContent = book.author;
+    modalDesc.textContent   = book.description || '';
+
+    // Reset cover/fallback state before trying to load the image
+    modalFallback.hidden = true;
+    modalFallback.textContent = book.title;
+    modalFallback.style.background = book.color || '#333';
+    modalCover.hidden = false;
+
+    if (book.cover) {
+      modalCover.onerror = () => {
+        modalCover.hidden = true;
+        modalFallback.hidden = false;
+      };
+      modalCover.src = book.cover;
+    } else {
+      modalCover.hidden = true;
+      modalFallback.hidden = false;
+    }
+
+    overlay.classList.add('open');
+    resetCoverTilt();
+    modalCloseBtn.focus();
+  }
+
+  function closeModal(){
+    overlay.classList.remove('open');
+  }
+
+  modalCloseBtn.addEventListener('click', closeModal);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  renderShelf();
+
+  /* =====================================================================
+     CURRENT READING widget — standalone, not part of the shelf array
+     ===================================================================== */
+  const currentReadingBook = {
+    title: "The Hobbit",
+    author: "J.R.R. Tolkien",
+    color: "#000000",
+    size: "medium",
+    thickness: "thick",
+    cover: "covers/the-hobbit.jpg",
+    spine: "spines/the-hobbit.png",
+    description: "Bilbo Baggins, a comfort-loving hobbit, is swept into a quest with a company of dwarves to reclaim treasure guarded by the dragon Smaug, encountering trolls, elves, goblins, and a mysterious ring along the way."
+  };
+  const currentReadingBtn   = document.getElementById('current-reading-btn');
+  const currentReadingCover = document.getElementById('current-reading-cover');
+  if (currentReadingBook){
+    currentReadingCover.src = currentReadingBook.cover;
+    currentReadingCover.alt = currentReadingBook.title;
+    currentReadingBtn.addEventListener('click', () => openModal(currentReadingBook));
+  }
+
+  /* =====================================================================
+     SHOWCASE TOGGLE — slides the whole shelf down out of view so the
+     solar system background is fully visible, and back up again.
+     ===================================================================== */
+  const shelfScene = document.querySelector('.shelf-scene');
+  const showcaseToggle = document.getElementById('showcase-toggle');
+  let shelfIsHidden = false;
+
+  showcaseToggle.addEventListener('click', () => {
+    shelfIsHidden = !shelfIsHidden;
+    shelfScene.classList.toggle('is-hidden', shelfIsHidden);
+    showcaseToggle.classList.toggle('is-flipped', shelfIsHidden);
+    const label = shelfIsHidden ? 'Show the bookshelf' : 'Hide the bookshelf to see the background';
+    showcaseToggle.setAttribute('aria-label', label);
+    showcaseToggle.setAttribute('title', label);
+  });
+
+  /* =====================================================================
+     BACKGROUND: pixelated solar system, real orbital math
+     -------------------------------------------------------------------
+     Each planet's position is computed from real Keplerian orbital
+     elements (the same approximation NASA/JPL publishes for quick
+     calculations) using today's actual date — so the starting layout
+     is astronomically real. From there, time is fast-forwarded by
+     DAYS_PER_SECOND simulated days per real second so the motion is
+     visible, but every planet keeps its correct *relative* speed
+     (Mercury laps Earth, Earth laps Mars, etc. — just like real life).
+
+     Distance from the sun is drawn on a compressed (square-root) scale
+     rather than true scale — true-to-scale would put Mercury a couple
+     pixels from the sun and Neptune off-screen. Angles and relative
+     speeds are real; only the radial spacing is stylized so everything
+     fits and reads clearly as pixel art.
+
+     Cursor reacts via a gentle parallax (the solar system drifts
+     slightly opposite the cursor, stars drift less, for a sense of
+     depth) plus a soft glow that follows the pointer.
+     ===================================================================== */
+  const canvas = document.getElementById('solar-bg');
+  const ctx = canvas.getContext('2d');
+
+  const PIXEL = 3;              // size of one "pixel" block — bigger = chunkier
+  const DAYS_PER_SECOND = 6;    // simulated days per real second — raise to speed up
+  const J2000 = new Date('2000-01-01T12:00:00Z').getTime();
+
+  // Orbital elements at epoch J2000 (a = AU, e = eccentricity, angles in degrees).
+  // L0 = mean longitude at epoch, PERI0 = longitude of perihelion at epoch.
+  // Source: NASA JPL's published low-precision formulas for approximate
+  // planetary positions (ssd.jpl.nasa.gov), simplified to 2D here.
+  const PLANETS = [
+    { name: 'Mercury', a: 0.38710, e: 0.20563, L0: 252.25084, peri0: 77.45779,  color: '#9c9791', size: 2 },
+    { name: 'Venus',   a: 0.72333, e: 0.00677, L0: 181.97973, peri0: 131.60246, color: '#e0c08a', size: 3 },
+    { name: 'Earth',   a: 1.00000, e: 0.01671, L0: 100.46435, peri0: 102.94719, color: '#5b9bd5', size: 3 },
+    { name: 'Mars',    a: 1.52368, e: 0.09340, L0: 355.45332, peri0: 336.04084, color: '#c1440e', size: 2 },
+    { name: 'Jupiter', a: 5.20260, e: 0.04849, L0: 34.40438,  peri0: 14.75385,  color: '#d8a76c', size: 6 },
+    { name: 'Saturn',  a: 9.55491, e: 0.05551, L0: 49.94432,  peri0: 92.43194,  color: '#e3d3a4', size: 5 },
+    { name: 'Uranus',  a: 19.21845,e: 0.04630, L0: 313.23218, peri0: 170.96424, color: '#9fd6de', size: 4 },
+    { name: 'Neptune', a: 30.11039,e: 0.00899, L0: 304.88003, peri0: 44.97135,  color: '#5b6fd8', size: 4 }
+  ];
+  // Precompute each planet's mean motion (degrees/day) via Kepler's 3rd law
+  PLANETS.forEach(p => {
+    const periodDays = Math.pow(p.a, 1.5) * 365.25;
+    p.n = 360 / periodDays;
+    p.M0 = p.L0 - p.peri0; // mean anomaly at epoch
+  });
+
+  const daysAtLoad = (Date.now() - J2000) / 86400000; // real "today" in days since epoch
+  let simDaysElapsed = 0;   // fast-forwarded on top of daysAtLoad
+  let lastFrameTime = null;
+
+  const DEG = Math.PI / 180;
+
+  function solveKepler(Mrad, e){
+    let E = Mrad;
+    for (let i = 0; i < 6; i++) {
+      E = E - (E - e * Math.sin(E) - Mrad) / (1 - e * Math.cos(E));
+    }
+    return E;
+  }
+
+  // Returns heliocentric {x, y} in AU for a planet at a given total days-since-epoch
+  function planetPosition(p, totalDays){
+    let M = (p.M0 + p.n * totalDays) % 360;
+    if (M < 0) M += 360;
+    const Mrad = M * DEG;
+    const E = solveKepler(Mrad, p.e);
+    const trueAnomaly = 2 * Math.atan2(
+      Math.sqrt(1 + p.e) * Math.sin(E / 2),
+      Math.sqrt(1 - p.e) * Math.cos(E / 2)
+    );
+    const r = p.a * (1 - p.e * Math.cos(E));
+    const angle = trueAnomaly + p.peri0 * DEG;
+    return { x: r * Math.cos(angle), y: r * Math.sin(angle) };
+  }
+
+  // Compressed radial scale so all 8 orbits fit on screen and stay legible
+  let distScale = 1;
+  function recomputeScale(){
+    const maxOrbitPx = Math.min(canvas.width, canvas.height) * 0.46;
+    distScale = maxOrbitPx / Math.sqrt(30.11); // Neptune's semi-major axis
+  }
+  function scaleDist(auDist){
+    return Math.sqrt(auDist) * distScale;
+  }
+  function snap(v){
+    return Math.round(v / PIXEL) * PIXEL;
+  }
+
+  /* =====================================================================
+     PLANET TEXTURES
+     -------------------------------------------------------------------
+     A real NASA photo can't be dropped into a canvas here (no image
+     assets, no external fetch), so instead each planet gets a small
+     procedurally-generated texture map built from what that planet
+     actually looks like — Earth's continents and clouds, Mars's dark
+     maria and polar caps, Jupiter/Saturn's bands and the Great Red
+     Spot, Mercury's craters. Built ONCE per planet at load time (not
+     redrawn from scratch every frame) so it stays stable while zoomed,
+     then sampled + shaded like a lit sphere when drawn.
+     ===================================================================== */
+  const PLANET_GRID = 44; // texture + sprite resolution — bigger = more detail
+
+  function hexToRgbArr(hex){
+    let c = hex.replace('#', '');
+    if (c.length === 3) c = c.split('').map(ch => ch + ch).join('');
+    const num = parseInt(c, 16);
+    return [num >> 16, (num >> 8) & 0xff, num & 0xff];
+  }
+  function parseColorArr(str){
+    if (str[0] === '#') return hexToRgbArr(str);
+    return str.match(/[\d.]+/g).slice(0, 3).map(Number);
+  }
+  function toCss(arr){
+    return `rgb(${Math.round(arr[0])},${Math.round(arr[1])},${Math.round(arr[2])})`;
+  }
+  function adjustColor(colorStr, amt){
+    const [r, g, b] = parseColorArr(colorStr);
+    return toCss([r + amt, g + amt, b + amt].map(v => Math.min(255, Math.max(0, v))));
+  }
+  function blendColor(colorA, colorB, t){
+    const a = parseColorArr(colorA), b = parseColorArr(colorB);
+    return toCss([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]);
+  }
+
+  function emptyGrid(){
+    const half = PLANET_GRID / 2;
+    const grid = [];
+    for (let y = 0; y < PLANET_GRID; y++) {
+      grid[y] = [];
+      for (let x = 0; x < PLANET_GRID; x++) {
+        const dx = x - half + 0.5, dy = y - half + 0.5;
+        grid[y][x] = (Math.sqrt(dx * dx + dy * dy) <= half) ? { dx, dy, lat: dy / half } : null;
+      }
+    }
+    return grid;
+  }
+
+  // Earth: ocean base, a handful of organic continent blobs, polar ice, wispy clouds
+  function buildEarthTexture(){
+    const grid = emptyGrid();
+    const half = PLANET_GRID / 2;
+    const oceanColor = '#2f6fb0';
+    const seeds = [];
+    const seedCount = 6 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < seedCount; i++) {
+      seeds.push({
+        cx: (Math.random() * 2 - 1) * half * 0.75,
+        cy: (Math.random() * 2 - 1) * half * 0.55,
+        r: half * (0.16 + Math.random() * 0.22),
+        wobble: Math.random() * Math.PI * 2
+      });
+    }
+    for (let y = 0; y < PLANET_GRID; y++) {
+      for (let x = 0; x < PLANET_GRID; x++) {
+        const cell = grid[y][x];
+        if (!cell) continue;
+        let color = oceanColor;
+        let isLand = false;
+        for (const s of seeds) {
+          const ddx = cell.dx - s.cx, ddy = cell.dy - s.cy;
+          const wobbleR = s.r * (1 + 0.28 * Math.sin(Math.atan2(ddy, ddx) * 3 + s.wobble));
+          if (ddx * ddx + ddy * ddy < wobbleR * wobbleR) { isLand = true; break; }
+        }
+        if (isLand) {
+          color = Math.random() < 0.65 ? '#4c7a3d' : '#7d6a3f';
+        } else if (Math.random() < 0.12) {
+          color = '#3a7fc0'; // ocean current variation
+        }
+        if (Math.abs(cell.lat) > 0.8) color = '#eef3f6'; // polar ice
+        grid[y][x] = adjustColor(color, Math.round((Math.random() - 0.5) * 10));
+      }
+    }
+    return grid;
+  }
+  // Wispy cloud bands are painted afterward — see paintClouds() below
+  function paintClouds(grid){
+    const half = PLANET_GRID / 2;
+    const cloudCount = 5 + Math.floor(Math.random() * 3);
+    const clouds = [];
+    for (let i = 0; i < cloudCount; i++) {
+      clouds.push({
+        cx: (Math.random() * 2 - 1) * half * 0.85,
+        cy: (Math.random() * 2 - 1) * half * 0.7,
+        rx: half * (0.3 + Math.random() * 0.35),
+        ry: half * (0.08 + Math.random() * 0.1),
+        rot: Math.random() * Math.PI
+      });
+    }
+    const half2 = half;
+    for (let y = 0; y < PLANET_GRID; y++) {
+      for (let x = 0; x < PLANET_GRID; x++) {
+        if (!grid[y][x]) continue;
+        const dx = x - half2 + 0.5, dy = y - half2 + 0.5;
+        for (const c of clouds) {
+          const cosR = Math.cos(c.rot), sinR = Math.sin(c.rot);
+          const lx = (dx - c.cx) * cosR + (dy - c.cy) * sinR;
+          const ly = -(dx - c.cx) * sinR + (dy - c.cy) * cosR;
+          if ((lx * lx) / (c.rx * c.rx) + (ly * ly) / (c.ry * c.ry) < 1 && Math.random() < 0.6) {
+            grid[y][x] = blendColor(grid[y][x], '#ffffff', 0.55);
+          }
+        }
+      }
+    }
+    return grid;
+  }
+
+  // Mars: rusty base, dark basaltic maria patches, small white polar caps
+  function buildMarsTexture(baseColor){
+    const grid = emptyGrid();
+    const half = PLANET_GRID / 2;
+    const patches = [];
+    const count = 5 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < count; i++) {
+      patches.push({
+        cx: (Math.random() * 2 - 1) * half * 0.75,
+        cy: (Math.random() * 2 - 1) * half * 0.6,
+        r: half * (0.12 + Math.random() * 0.2),
+        wobble: Math.random() * Math.PI * 2
+      });
+    }
+    for (let y = 0; y < PLANET_GRID; y++) {
+      for (let x = 0; x < PLANET_GRID; x++) {
+        const cell = grid[y][x];
+        if (!cell) continue;
+        let color = baseColor;
+        for (const s of patches) {
+          const ddx = cell.dx - s.cx, ddy = cell.dy - s.cy;
+          const wobbleR = s.r * (1 + 0.3 * Math.sin(Math.atan2(ddy, ddx) * 4 + s.wobble));
+          if (ddx * ddx + ddy * ddy < wobbleR * wobbleR) { color = adjustColor(baseColor, -45); break; }
+        }
+        if (Math.abs(cell.lat) > 0.86) color = '#f3ede0'; // small polar cap
+        grid[y][x] = adjustColor(color, Math.round((Math.random() - 0.5) * 14));
+      }
+    }
+    return grid;
+  }
+
+  // Gas giants: horizontal wavy bands, optional Great Red Spot
+  function buildBandedTexture(baseColor, opts){
+    opts = opts || {};
+    const grid = emptyGrid();
+    const half = PLANET_GRID / 2;
+    const bandCount = opts.bandsFew ? 5 : 9;
+    const bandPhase = [];
+    for (let i = 0; i < bandCount; i++) bandPhase.push(Math.random() * Math.PI * 2);
+    const spot = opts.spot ? {
+      cx: half * (0.05 + Math.random() * 0.2),
+      cy: half * (0.25 + Math.random() * 0.15),
+      rx: half * 0.22, ry: half * 0.13
+    } : null;
+    for (let y = 0; y < PLANET_GRID; y++) {
+      for (let x = 0; x < PLANET_GRID; x++) {
+        const cell = grid[y][x];
+        if (!cell) continue;
+        const wave = Math.sin(cell.dx * 0.35 + bandPhase[Math.floor(((cell.lat + 1) / 2) * bandCount) % bandCount]) * (opts.subtle ? 0.4 : 1.1);
+        const bandIndex = Math.floor((((cell.lat + 1) / 2) * bandCount + wave * 0.15));
+        const tone = opts.subtle
+          ? (bandIndex % 2 === 0 ? 6 : -6)
+          : [22, -6, 10, -22, 0][((bandIndex % 5) + 5) % 5];
+        let color = adjustColor(baseColor, tone + Math.round((Math.random() - 0.5) * 8));
+        if (spot) {
+          const ddx = cell.dx - spot.cx, ddy = cell.dy - spot.cy;
+          if ((ddx * ddx) / (spot.rx * spot.rx) + (ddy * ddy) / (spot.ry * spot.ry) < 1) {
+            color = blendColor(color, '#c1440e', 0.6);
+          }
+        }
+        grid[y][x] = color;
+      }
+    }
+    return grid;
+  }
+
+  // Mercury / generic rocky body: base color + scattered craters with lit rims
+  function buildCraterTexture(baseColor){
+    const grid = emptyGrid();
+    const half = PLANET_GRID / 2;
+    const craters = [];
+    const count = 6 + Math.floor(Math.random() * 5);
+    for (let i = 0; i < count; i++) {
+      craters.push({
+        cx: (Math.random() * 2 - 1) * half * 0.85,
+        cy: (Math.random() * 2 - 1) * half * 0.85,
+        r: half * (0.06 + Math.random() * 0.16)
+      });
+    }
+    for (let y = 0; y < PLANET_GRID; y++) {
+      for (let x = 0; x < PLANET_GRID; x++) {
+        const cell = grid[y][x];
+        if (!cell) continue;
+        let color = adjustColor(baseColor, Math.round((Math.random() - 0.5) * 12));
+        for (const c of craters) {
+          const dx = cell.dx - c.cx, dy = cell.dy - c.cy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < c.r * 0.7) { color = adjustColor(baseColor, -42); break; }
+          if (dist < c.r) { color = adjustColor(baseColor, 20); break; }
+        }
+        grid[y][x] = color;
+      }
+    }
+    return grid;
+  }
+
+  function generateTexture(p){
+    switch (p.name) {
+      case 'Earth':   return paintClouds(buildEarthTexture());
+      case 'Mars':    return buildMarsTexture(p.color);
+      case 'Jupiter': return buildBandedTexture(p.color, { spot: true });
+      case 'Saturn':  return buildBandedTexture(p.color, { subtle: true });
+      case 'Venus':   return buildBandedTexture(p.color, { subtle: true, bandsFew: true });
+      case 'Uranus':
+      case 'Neptune': return buildBandedTexture(p.color, { subtle: true, bandsFew: true });
+      default:        return buildCraterTexture(p.color); // Mercury
+    }
+  }
+
+  PLANETS.forEach(p => { p.texture = generateTexture(p); });
+
+  // Draws a planet by sampling its precomputed texture into a chunky
+  // low-res pixel sphere (fixed block count across the diameter, however
+  // big it's drawn), with a bit of limb-darkening layered on top so it
+  // still reads as a lit sphere and not a flat map.
+  function drawPlanetSprite(centerX, centerY, radius, p, withRing){
+    const half = PLANET_GRID / 2;
+    const blockSize = (radius * 2) / PLANET_GRID;
+
+    if (withRing) {
+      ctx.fillStyle = adjustColor(p.color, 60);
+      for (let deg = 0; deg < 360; deg += 3) {
+        const rad = deg * DEG;
+        const rx = Math.cos(rad) * radius * 1.7;
+        const ry = Math.sin(rad) * radius * 1.7 * 0.32;
+        if (Math.abs(ry) < radius * 0.6 && rx < 0) continue; // hide arc passing behind the sphere
+        ctx.fillRect(
+          Math.round(centerX + rx - blockSize / 2),
+          Math.round(centerY + ry - blockSize / 2),
+          Math.ceil(blockSize * 0.7),
+          Math.ceil(blockSize * 0.7)
+        );
+      }
+    }
+
+    for (let by = 0; by < PLANET_GRID; by++) {
+      for (let bx = 0; bx < PLANET_GRID; bx++) {
+        const cell = p.texture[by][bx];
+        if (!cell) continue;
+        const dx = bx - half + 0.5, dy = by - half + 0.5;
+        const distNorm = Math.sqrt(dx * dx + dy * dy) / half;
+        let shadeAmt;
+        if (distNorm < 0.3) shadeAmt = 14;
+        else if (distNorm < 0.55) shadeAmt = 4;
+        else if (distNorm < 0.75) shadeAmt = -4;
+        else if (distNorm < 0.9) shadeAmt = -16;
+        else shadeAmt = -30;
+        ctx.fillStyle = adjustColor(cell, shadeAmt);
+        ctx.fillRect(
+          Math.round(centerX + dx * blockSize - blockSize / 2),
+          Math.round(centerY + dy * blockSize - blockSize / 2),
+          Math.ceil(blockSize),
+          Math.ceil(blockSize)
+        );
+      }
+    }
+  }
+
+  // Starfield — generated once, drawn as tiny pixels, drifts a little less
+  // than the planets on cursor move (background parallax layer)
+  let stars = [];
+  function generateStars(){
+    const count = Math.floor((canvas.width * canvas.height) / 4000);
+    stars = [];
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() < 0.15 ? 2 : 1,
+        twinkleOffset: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  // UFO — drifts slowly to nearby random spots (small radius, slow ease),
+  // so it wanders but never zips far or fast.
+  let ufo = null;
+  function initUfo(){
+    const x = canvas.width * (0.15 + Math.random() * 0.7);
+    const y = canvas.height * (0.08 + Math.random() * 0.22);
+    ufo = { x, y, targetX: x, targetY: y, blinkOffset: Math.random() * Math.PI * 2 };
+  }
+  function retargetUfo(){
+    const radius = 90;
+    const marginX = canvas.width * 0.1;
+    const marginY = canvas.height * 0.06;
+    ufo.targetX = Math.min(canvas.width - marginX, Math.max(marginX, ufo.x + (Math.random() * 2 - 1) * radius));
+    ufo.targetY = Math.min(canvas.height * 0.4, Math.max(marginY, ufo.y + (Math.random() * 2 - 1) * radius));
+  }
+  let nextUfoRetarget = 0;
+
+  function drawUfo(x, y, t){
+    ctx.save();
+    ctx.globalAlpha = 1;
+    const bodyW = 7 * PIXEL, bodyH = 2 * PIXEL, domeW = 3 * PIXEL, domeH = 2 * PIXEL;
+    ctx.fillStyle = 'rgba(160,220,255,0.18)';
+    ctx.fillRect(snap(x) - bodyW, snap(y) - PIXEL, bodyW * 2, bodyH * 2);
+    ctx.fillStyle = '#b8c4cf';
+    ctx.fillRect(snap(x) - bodyW / 2, snap(y) - bodyH / 2, bodyW, bodyH);
+    ctx.fillStyle = '#8fe6ff';
+    ctx.fillRect(snap(x) - domeW / 2, snap(y) - bodyH / 2 - domeH, domeW, domeH);
+    const blink = 0.5 + 0.5 * Math.sin(t * 4 + ufo.blinkOffset);
+    ctx.fillStyle = `rgba(255,230,120,${0.4 + 0.6 * blink})`;
+    ctx.fillRect(snap(x) - bodyW / 2, snap(y) + bodyH / 2, PIXEL, PIXEL);
+    ctx.fillRect(snap(x), snap(y) + bodyH / 2, PIXEL, PIXEL);
+    ctx.fillRect(snap(x) + bodyW / 2 - PIXEL, snap(y) + bodyH / 2, PIXEL, PIXEL);
+    ctx.restore();
+  }
+
+  function resizeCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    recomputeScale();
+    generateStars();
+    if (!ufo) initUfo();
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  // Cursor parallax + glow
+  let targetOffsetX = 0, targetOffsetY = 0;
+  let offsetX = 0, offsetY = 0;
+  let targetGlowX = -9999, targetGlowY = -9999;
+  let glowX = -9999, glowY = -9999;
+  let glowOpacity = 0, targetGlowOpacity = 0;
+  const PARALLAX_PX = 22;
+
+  window.addEventListener('pointermove', (e) => {
+    const nx = (e.clientX / canvas.width) * 2 - 1;   // -1..1
+    const ny = (e.clientY / canvas.height) * 2 - 1;
+    targetOffsetX = -nx * PARALLAX_PX;
+    targetOffsetY = -ny * PARALLAX_PX;
+    targetGlowX = e.clientX;
+    targetGlowY = e.clientY;
+    targetGlowOpacity = 1;
+  });
+  window.addEventListener('pointerleave', () => {
+    targetOffsetX = 0;
+    targetOffsetY = 0;
+    targetGlowOpacity = 0;
+  });
+
+  /* =====================================================================
+     PLANET ZOOM — click a planet to smoothly zoom into it (still pixel
+     art, just bigger blocks); click again (or press Escape) to zoom back
+     out. Hit-testing uses each planet's last-drawn screen position.
+     ===================================================================== */
+  let selectedPlanet = null;
+  let zoomProgress = 0;  // 0 = normal view, 1 = fully zoomed in (eased each frame)
+  let zoomTarget = 0;
+  const ZOOM_EASE = 0.07;
+
+  function planetHitAt(x, y){
+    let hit = null;
+    PLANETS.forEach(p => {
+      if (p._screenX === undefined) return;
+      const dx = x - p._screenX, dy = y - p._screenY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const hitRadius = Math.max(14, p.size * PIXEL);
+      if (dist <= hitRadius) hit = p;
+    });
+    return hit;
+  }
+
+  canvas.addEventListener('click', (e) => {
+    if (selectedPlanet) {
+      zoomTarget = 0; // any click while zoomed/zooming backs out
+    } else {
+      const hit = planetHitAt(e.clientX, e.clientY);
+      if (hit) {
+        selectedPlanet = hit;
+        zoomTarget = 1;
+      }
+    }
+    if (prefersReducedMotion) {
+      zoomProgress = zoomTarget;
+      if (zoomTarget === 0) selectedPlanet = null;
+      drawSolarSystem(daysAtLoad, canvas.width / 2, canvas.height / 2, -9999, -9999, 0);
+    }
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
+    if (!selectedPlanet) {
+      canvas.style.cursor = planetHitAt(e.clientX, e.clientY) ? 'pointer' : '';
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && selectedPlanet) zoomTarget = 0;
+  });
+
+  function drawSolarSystem(totalDays, cx, cy, glowScreenX, glowScreenY, glowAlpha){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Starfield (background layer — subtler parallax)
+    const starOffsetX = offsetX * 0.3;
+    const starOffsetY = offsetY * 0.3;
+    for (const star of stars) {
+      const twinkle = 0.6 + 0.4 * Math.sin(totalDays * 3 + star.twinkleOffset);
+      ctx.globalAlpha = 0.5 * twinkle;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(snap(star.x + starOffsetX), snap(star.y + starOffsetY), star.size, star.size);
+    }
+    ctx.globalAlpha = 1;
+
+    const originX = cx + offsetX;
+    const originY = cy + offsetY;
+    const sceneAlpha = 1 - zoomProgress;
+
+    // Orbit rings (dashed pixel dots) — fade out while zoomed into a planet
+    ctx.globalAlpha = sceneAlpha;
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    PLANETS.forEach(p => {
+      const ringR = scaleDist(p.a);
+      for (let deg = 0; deg < 360; deg += 5) {
+        const rad = deg * DEG;
+        const x = originX + Math.cos(rad) * ringR;
+        const y = originY + Math.sin(rad) * ringR;
+        ctx.fillRect(snap(x), snap(y), PIXEL, PIXEL);
+      }
+    });
+
+    // Sun
+    const sunSize = 8 * PIXEL;
+    ctx.fillStyle = '#ffd27a';
+    ctx.fillRect(snap(originX) - sunSize / 2, snap(originY) - sunSize / 2, sunSize, sunSize);
+    ctx.fillStyle = '#fff3d6';
+    ctx.fillRect(snap(originX) - sunSize / 4, snap(originY) - sunSize / 4, sunSize / 2, sunSize / 2);
+
+    // Planets
+    PLANETS.forEach(p => {
+      const pos = planetPosition(p, totalDays);
+      const r = Math.sqrt(pos.x * pos.x + pos.y * pos.y);
+      const angle = Math.atan2(pos.y, pos.x);
+      const drawR = scaleDist(r);
+      const x = originX + Math.cos(angle) * drawR;
+      const y = originY + Math.sin(angle) * drawR;
+      p._screenX = x;
+      p._screenY = y;
+
+      if (p === selectedPlanet) return; // drawn bigger, separately, below
+
+      const s = p.size * PIXEL;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(snap(x) - s / 2, snap(y) - s / 2, s, s);
+    });
+    ctx.globalAlpha = 1;
+
+    // UFO — drifts in the upper sky, small pixel sprite, blinking light
+    if (ufo) {
+      ctx.globalAlpha = sceneAlpha;
+      drawUfo(ufo.x + offsetX * 0.6, ufo.y + offsetY * 0.6, totalDays);
+      ctx.globalAlpha = 1;
+    }
+
+    // Selected planet — pixel sprite animating from its orbital spot to center
+    if (selectedPlanet) {
+      const p = selectedPlanet;
+      const smallR = (p.size * PIXEL) / 2;
+      const bigR = Math.min(canvas.width, canvas.height) * 0.26;
+      const targetCX = canvas.width / 2;
+      const targetCY = canvas.height / 2;
+      const cx2 = p._screenX + (targetCX - p._screenX) * zoomProgress;
+      const cy2 = p._screenY + (targetCY - p._screenY) * zoomProgress;
+      const radius = smallR + (bigR - smallR) * zoomProgress;
+
+      drawPlanetSprite(cx2, cy2, radius, p, p.name === 'Saturn');
+
+      if (zoomProgress > 0.5) {
+        ctx.globalAlpha = Math.min(1, (zoomProgress - 0.5) * 2);
+        ctx.fillStyle = '#f3ecd9';
+        ctx.font = "600 12px 'JetBrains Mono', monospace";
+        ctx.textAlign = 'center';
+        ctx.fillText(p.name.toUpperCase() + '  ·  CLICK TO GO BACK', cx2, cy2 + radius + 30);
+        ctx.textAlign = 'left';
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // Cursor glow — soft light that brightens the area under the pointer
+    if (glowAlpha > 0.01) {
+      const grad = ctx.createRadialGradient(glowScreenX, glowScreenY, 0, glowScreenX, glowScreenY, 220);
+      grad.addColorStop(0, `rgba(255,255,255,${0.10 * glowAlpha})`);
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function animate(now){
+    if (lastFrameTime !== null) {
+      const deltaSeconds = (now - lastFrameTime) / 1000;
+      simDaysElapsed += deltaSeconds * DAYS_PER_SECOND;
+    }
+    lastFrameTime = now;
+
+    offsetX += (targetOffsetX - offsetX) * 0.05;
+    offsetY += (targetOffsetY - offsetY) * 0.05;
+    glowOpacity += (targetGlowOpacity - glowOpacity) * 0.08;
+    glowX += (targetGlowX - glowX) * 0.15;
+    glowY += (targetGlowY - glowY) * 0.15;
+
+    zoomProgress += (zoomTarget - zoomProgress) * ZOOM_EASE;
+    if (zoomTarget === 0 && zoomProgress < 0.01) {
+      zoomProgress = 0;
+      selectedPlanet = null;
+    }
+
+    if (ufo) {
+      if (now >= nextUfoRetarget) {
+        retargetUfo();
+        nextUfoRetarget = now + 4000 + Math.random() * 4000;
+      }
+      ufo.x += (ufo.targetX - ufo.x) * 0.01;
+      ufo.y += (ufo.targetY - ufo.y) * 0.01;
+    }
+
+    drawSolarSystem(daysAtLoad + simDaysElapsed, canvas.width / 2, canvas.height / 2, glowX, glowY, glowOpacity);
+    requestAnimationFrame(animate);
+  }
+
+  if (prefersReducedMotion) {
+    drawSolarSystem(daysAtLoad, canvas.width / 2, canvas.height / 2, -9999, -9999, 0); // one accurate static frame
+  } else {
+    requestAnimationFrame(animate);
+  }
+
+</script>
+<script>
+/* =====================================================================
+   CLAY — a small pixelated black netherland dwarf rabbit that hops
+   around the page. Click (or tap) him to say hi.
+   ===================================================================== */
+(function(){
+  // Silhouette drawn on a tiny grid, then scaled up blocky via
+  // image-rendering:pixelated — same trick as the background canvas,
+  // just a much smaller sprite. Facing right by default.
+  const SPRITE_ROWS = [
+    "....................",
+    ".........##.........",
+    ".........##.........",
+    "........####........",
+    "......########......",
+    "....############....",
+    "..###############...",
+    "..###############...",
+    "..####........###...",
+    "....##........###...",
+    "....................",
+  ];
+  const cols = Math.max(...SPRITE_ROWS.map(r => r.length));
+  const rows = SPRITE_ROWS.length;
+  const SCALE = 6; // on-page size of one sprite pixel
+
+  const rabbit = document.getElementById('pixel-rabbit');
+  const rctx = rabbit.getContext('2d');
+  rabbit.width = cols;
+  rabbit.height = rows;
+  rabbit.style.width  = (cols * SCALE) + 'px';
+  rabbit.style.height = (rows * SCALE) + 'px';
+
+  function paintSprite(ctx){
+    ctx.clearRect(0, 0, cols, rows);
+    ctx.fillStyle = '#050505';
+    for (let y = 0; y < rows; y++){
+      const row = SPRITE_ROWS[y];
+      for (let x = 0; x < cols; x++){
+        if (row[x] === '#') ctx.fillRect(x, y, 1, 1);
+      }
+    }
+  }
+  paintSprite(rctx);
+
+  // Random-walk movement: pick a wander target, amble toward it, hop a
+  // little as it goes, then pick a new target. Bounces off the viewport
+  // edges implicitly since targets are always clamped on-screen.
+  let x = window.innerWidth  * 0.5;
+  let y = window.innerHeight * 0.6;
+  let targetX = x, targetY = y;
+  let facingRight = true;
+  const SPEED = 55; // px/sec
+  let lastT = null;
+
+  function pickNewTarget(){
+    const margin = 20;
+    targetX = margin + Math.random() * (window.innerWidth  - margin * 2 - cols * SCALE);
+    targetY = margin + Math.random() * (window.innerHeight - margin * 2 - rows * SCALE);
+  }
+  pickNewTarget();
+
+  function tick(now){
+    if (lastT === null) lastT = now;
+    const dt = Math.min((now - lastT) / 1000, 0.05);
+    lastT = now;
+
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist < 4) {
+      pickNewTarget();
+    } else {
+      const step = Math.min(SPEED * dt, dist);
+      x += (dx / dist) * step;
+      y += (dy / dist) * step;
+      if (Math.abs(dx) > 2) facingRight = dx > 0;
+    }
+
+    const hop = Math.abs(Math.sin(now / 140)) * 6; // little hop bounce
+    rabbit.style.transform =
+      `translate(${x}px, ${y - hop}px) scaleX(${facingRight ? 1 : -1})`;
+
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  window.addEventListener('resize', () => {
+    x = Math.min(x, window.innerWidth  - cols * SCALE);
+    y = Math.min(y, window.innerHeight - rows * SCALE);
+    pickNewTarget();
+  });
+
+  // Popup: reveal Clay full-size and name him.
+  const rabbitOverlay   = document.getElementById('rabbit-modal-overlay');
+  const rabbitCloseBtn  = document.getElementById('rabbit-modal-close');
+  const rabbitModalCanvas = document.getElementById('rabbit-modal-canvas');
+  const rmctx = rabbitModalCanvas.getContext('2d');
+  rabbitModalCanvas.width  = cols;
+  rabbitModalCanvas.height = rows;
+  rabbitModalCanvas.style.width  = (cols * SCALE * 2.4) + 'px';
+  rabbitModalCanvas.style.height = (rows * SCALE * 2.4) + 'px';
+  paintSprite(rmctx);
+
+  function openRabbitModal(){
+    rabbitOverlay.classList.add('open');
+    rabbitCloseBtn.focus();
+  }
+  function closeRabbitModal(){
+    rabbitOverlay.classList.remove('open');
+  }
+
+  rabbit.addEventListener('click', openRabbitModal);
+  rabbit.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRabbitModal(); }
+  });
+  rabbitCloseBtn.addEventListener('click', closeRabbitModal);
+  rabbitOverlay.addEventListener('click', (e) => {
+    if (e.target === rabbitOverlay) closeRabbitModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeRabbitModal();
+  });
+})();
+</script>
+</body>
+</html>
