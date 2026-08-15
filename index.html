@@ -729,6 +729,16 @@ document.getElementById('music-toggle').addEventListener('click', () => {
    ===================================================================== */
   const books = [
     {
+    title: "Short Stories",
+    author: "Fyodor Dostoevsky",
+    color: "#000000",
+    size: "small",
+    thickness: "thin",
+    cover: "covers/short-stories.jpg",
+    spine: "spines/short-stories.png",
+    description: "A collection of Dostoevsky's shorter fiction, spanning dark comedy, psychological unease, and social satire, showing the range of his voice outside the scope of his major novels."
+  },
+    {
     title: "The Hobbit",
     author: "J.R.R. Tolkien",
     color: "#000000",
@@ -1156,14 +1166,14 @@ document.getElementById('music-toggle').addEventListener('click', () => {
      CURRENT READING widget — standalone, not part of the shelf array
      ===================================================================== */
   const currentReadingBook = {
-    title: "The Hobbit",
-    author: "J.R.R. Tolkien",
+    title: "Short Stories",
+    author: "Fyodor Dostoevsky",
     color: "#000000",
-    size: "medium",
-    thickness: "thick",
-    cover: "covers/the-hobbit.jpg",
-    spine: "spines/the-hobbit.png",
-    description: "Bilbo Baggins, a comfort-loving hobbit, is swept into a quest with a company of dwarves to reclaim treasure guarded by the dragon Smaug, encountering trolls, elves, goblins, and a mysterious ring along the way."
+    size: "small",
+    thickness: "thin",
+    cover: "covers/short-stories.jpg",
+    spine: "spines/short-stories.png",
+    description: "A collection of Dostoevsky's shorter fiction, spanning dark comedy, psychological unease, and social satire, showing the range of his voice outside the scope of his major novels."
   };
   const currentReadingBtn   = document.getElementById('current-reading-btn');
   const currentReadingCover = document.getElementById('current-reading-cover');
