@@ -728,6 +728,16 @@ document.getElementById('music-toggle').addEventListener('click', () => {
      description - the text shown in the popup under the title/author.
    ===================================================================== */
   const books = [
+  {
+    title: "The Count of Monte Cristo",
+    author: "Alexandre Dumas",
+    color: "#000000",
+    size: "large",
+    thickness: "thicker",
+    cover: "covers/the-count-of-monte-cristo.jpg",
+    spine: "spines/the-count-of-monte-cristo.png",
+    description: "Edmond Dantès is falsely imprisoned by jealous rivals on his wedding day, escapes after years in a island fortress, and uses a hidden fortune to methodically pursue elaborate revenge against the men who betrayed him."
+  },
     {
     title: "Short Stories",
     author: "Fyodor Dostoevsky",
@@ -1166,14 +1176,14 @@ document.getElementById('music-toggle').addEventListener('click', () => {
      CURRENT READING widget — standalone, not part of the shelf array
      ===================================================================== */
   const currentReadingBook = {
-    title: "Short Stories",
-    author: "Fyodor Dostoevsky",
+    title: "The Count of Monte Cristo",
+    author: "Alexandre Dumas",
     color: "#000000",
-    size: "small",
-    thickness: "thin",
-    cover: "covers/short-stories.jpg",
-    spine: "spines/short-stories.png",
-    description: "A collection of Dostoevsky's shorter fiction, spanning dark comedy, psychological unease, and social satire, showing the range of his voice outside the scope of his major novels."
+    size: "large",
+    thickness: "thicker",
+    cover: "covers/the-count-of-monte-cristo.jpg",
+    spine: "spines/the-count-of-monte-cristo.png",
+    description: "Edmond Dantès is falsely imprisoned by jealous rivals on his wedding day, escapes after years in a island fortress, and uses a hidden fortune to methodically pursue elaborate revenge against the men who betrayed him."
   };
   const currentReadingBtn   = document.getElementById('current-reading-btn');
   const currentReadingCover = document.getElementById('current-reading-cover');
